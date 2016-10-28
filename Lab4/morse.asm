@@ -116,87 +116,87 @@ main_asm:   mov.w   #WDT_CTL,&WDTCTL        ; set WD timer interval
             bis.b   #0x20,&P4DIR            ; set P4.5 as output (speaker)
             clr.w   &beep_cnt               ; clear counters
             clr.w   &delay_cnt
-            mov.w	#WDT_IPS,&timer_cnt
-            bic.w	#0x4f,&P4OUT			; clear red light
-            bic.w	#0x10,&P3OUT
+            mov.w   #WDT_IPS,&timer_cnt
+            bic.w   #0x4f,&P4OUT	    ; clear red light
+            bic.w   #0x10,&P3OUT
             bis.w   #GIE,SR                 ; enable interrupts
-            bic.b   #0x0f,&P1SEL           	; RBX430-1 push buttons
-           	bic.b   #0x0f,&P1DIR           	; Configure P1.0-3 as Inputs
-           	bis.b   #0x0f,&P1OUT           	; pull-ups
-           	bis.b   #0x0f,&P1IES           	; h to l
-           	bis.b   #0x0f,&P1REN           	; enable pull-ups
-           	bis.b   #0x0f,&P1IE            	; enable switch interrupts
+            bic.b   #0x0f,&P1SEL            ; RBX430-1 push buttons
+            bic.b   #0x0f,&P1DIR          	; Configure P1.0-3 as Inputs
+            bis.b   #0x0f,&P1OUT           	; pull-ups
+            bis.b   #0x0f,&P1IES           	; h to l
+            bis.b   #0x0f,&P1REN           	; enable pull-ups
+            bis.b   #0x0f,&P1IE            	; enable switch interrupts
 
-loop:      	mov.w  	#message,r4            	; point to message
+loop:       mov.w  	#message,r4            	; point to message
 
-loop02:    	mov.b  	@r4+,r5                	; get character
-			cmp.b	#0,r5					; check null
-			jeq		findnull				; y, go reset message
-			cmp.b 	#32,r5					; check if space
-			 jeq 	findSpace				; y, go to space
-			cmp.b	#65,r5					; n, check if is letter (ASCII>65)
-			 jge	findLetter				; y, go to find which letter
-			cmp.b	#48,r5					; n, check if this is number
-			 jge	findNumber				; y
+loop02:     mov.b  	@r4+,r5                	; get character
+	    cmp.b	#0,r5					; check null
+	      jeq		findnull				; y, go reset message
+	    cmp.b 	#32,r5					; check if space
+	      jeq 	findSpace				; y, go to space
+	    cmp.b	#65,r5					; n, check if is letter (ASCII>65)
+	      jge	findLetter				; y, go to find which letter
+	    cmp.b	#48,r5					; n, check if this is number
+	      jge	findNumber				; y
 ;------------------------------------------------------------------------------------------
-findnull:	ORANGE_TOGGLE					; signify done
-			call	#doSPACE				; space break
-			call	#doSPACE				; space break x 2
-			jmp	loop						;reset the message
+findnull:   ORANGE_TOGGLE					; signify done
+	    call	#doSPACE				; space break
+	    call	#doSPACE				; space break x 2
+	     jmp	loop						;reset the message
 
-findSpace:	call #doSPACE					;should be 7 DOTS long
-			jmp	loop02
+findSpace:  call #doSPACE					;should be 7 DOTS long
+	     jmp	loop02
 
 
-findLetter:	sub.w  	#'A',r5                	; make index 0-25
-		   	add.w  	r5,r5                  	; make word index
-		   	mov.w  	letters(r5),r5         	; get pointer to letter codes
-		   	jmp	loop10						;
+findLetter: sub.w  	#'A',r5                	; make index 0-25
+	    add.w  	r5,r5                  	; make word index
+	    mov.w  	letters(r5),r5         	; get pointer to letter codes
+	      jmp	loop10						;
 
-findNumber:	sub.w	#'0',r5					; makes index 0-9
-			add.w 	r5,r5						; make word index
-			mov.w	numbers(r5),r5			; get pointer to number codes
-			jmp loop10
+findNumber: sub.w	#'0',r5					; makes index 0-9
+	    add.w 	r5,r5						; make word index
+	    mov.w	numbers(r5),r5			; get pointer to number codes
+	      jmp loop10
 
 ;-------------------------------------------------------------------------------------------
 
-loop10:    	mov.b  	@r5+,r6                	; get DOT, DASH, or END
-		   	cmp.b  	#DOT,r6                	; dot?
-		   	jne	goDASH						;
-		   	call	#doDOT					;
-		   	jmp loop10						; get next DOT/DASH
-goDASH:	   	cmp.b	#DASH,r6				; dash?
-		   	jne goEND						;
-		   	call	#doDASH					;
-		   	jmp loop10						; get next DOT/DASH
-goEND:	   	cmp.b	#END, r6				; end?
-			call	#doEND
-		   	jmp    loop02
+loop10:    mov.b  	@r5+,r6                	; get DOT, DASH, or END
+	   cmp.b  	#DOT,r6                	; dot?
+	     jne	goDASH						;
+	    call	#doDOT					;
+	     jmp loop10						; get next DOT/DASH
+goDASH:	   cmp.b	#DASH,r6				; dash?
+	     jne goEND						;
+	    call	#doDASH					;
+	     jmp loop10						; get next DOT/DASH
+goEND:	   cmp.b	#END, r6				; end?
+	    call	#doEND
+	     jmp    loop02
 ;-------------------------------------------------------------------------------------------------
-doEND:		push	r15
-			mov.w	#ELEMENT*2,r15
-			call	#delay
-			pop		r15
-			ret
+doEND:	    push	r15
+	   mov.w	#ELEMENT*2,r15
+	    call	#delay
+	     pop		r15
+    	     ret
 
 doDOT:      push	r15
-			mov.w   #ELEMENT,r15            ; output DOT
+	   mov.w   #ELEMENT,r15            ; output DOT
             call    #beep
-            mov.w   #ELEMENT,r15            ; delay 1 element
+           mov.w   #ELEMENT,r15            ; delay 1 element
             call    #delay
             pop		r15
             ret
 
 doDASH:     push	r15
-			mov.w   #ELEMENT*3,r15          ; output DASH
+	   mov.w   #ELEMENT*3,r15          ; output DASH
             call    #beep
-            mov.w   #ELEMENT,r15            ; delay 1 element
+           mov.w   #ELEMENT,r15            ; delay 1 element
             call    #delay
             pop		r15
             ret
 
 doSPACE:    push	r15
- 			mov.w   #ELEMENT*4,r15          ; output space
+ 	   mov.w   #ELEMENT*4,r15          ; output space
             call    #delay                  ; delay
             pop		r15
             ret
@@ -235,25 +235,25 @@ WDT_02:     tst.w   &delay_cnt              ; delay?
               jeq   WDT_11                  ; n
             dec.w   &delay_cnt              ; y, decrement count
 
-WDT_11:		dec.w	&timer_cnt
-			  jne	WDT_12
-			PED_GREEN_TOGGLE
-			mov.w	#WDT_IPS,&timer_cnt
+WDT_11:	    dec.w	&timer_cnt
+	      jne	WDT_12
+	    PED_GREEN_TOGGLE
+	    mov.w	#WDT_IPS,&timer_cnt
 											; toggling green light
 
-WDT_12:		tst.w   &debounce_cnt           ; debouncing?
-             jz	   	WDT_30                 ; n
+WDT_12:	    tst.w   &debounce_cnt           ; debouncing?
+               jz	   	WDT_30                 ; n
 
 ; debounce switches & process
 
-           	dec.w   &debounce_cnt           ; y, decrement count, done?
-           	jne		WDT_30
-           	push    r15                    ; y
-           	mov.b   &P1IN,r15              ; read switches
-           	and.b   #0x0f,r15
-           	xor.b   #0x0f,r15              ; any switches?
-             jz   WDT_20                 ; n
-			xor.b	#0x20,&P4DIR
+            dec.w   &debounce_cnt           ; y, decrement count, done?
+              jne		WDT_30
+             push    r15                    ; y
+            mov.b   &P1IN,r15              ; read switches
+            and.b   #0x0f,r15
+            xor.b   #0x0f,r15              ; any switches?
+               jz   WDT_20                 ; n
+	    xor.b	#0x20,&P4DIR
 
 
 ; process switch inputs (r15 = switches)
